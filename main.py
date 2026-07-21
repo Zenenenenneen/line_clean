@@ -1,0 +1,41 @@
+from fastapi import FastAPI, Request
+import requests
+
+app = FastAPI()
+
+LINE_ACCESS_TOKEN = "c3PJNA5FEDEdTYioXHXQU85hM7YLrDZSpm13BdFQB8NkgssQAAJD9H01z1+HwdYy1kf2xVeKqxjfW/v7crQm7aN6XRjN4foYjysJRiBZvVfQISvy8UUgga+K/JomzyA/Xh/17YNLYT//opvnkYrebAdB04t89/1O/w1cDnyilFU="
+
+
+@app.post("/webhook")
+async def webhook(request: Request):
+    data = await request.json()
+    print("Incoming LINE event:", data)
+
+    for event in data["events"]:
+        if event["type"] == "message" and event["message"]["type"] == "text":
+            user_message = event["message"]["text"]
+
+            # --- Hardcoded replies ---
+            if user_message.lower() in ["hi", "hello"]:
+                reply_text = "Hey there! 👋"
+            elif "bye" in user_message.lower():
+                reply_text = "Goodbye, take care!"
+            elif "help" in user_message.lower():
+                reply_text = "Sure, what do you need help with?"
+            else:
+                reply_text = f"You said: {user_message}"
+
+            # --- Reply to LINE ---
+            requests.post(
+                "https://api.line.me/v2/bot/message/reply",
+                headers={
+                    "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "replyToken": event["replyToken"],
+                    "messages": [{"type": "text", "text": reply_text}]
+                }
+            )
+
+    return {"status": "ok"}
