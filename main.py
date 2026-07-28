@@ -22,8 +22,6 @@ async def webhook(request: Request):
                 reply_text = "Goodbye, take care!"
             elif "help" in user_message.lower():
                 reply_text = "Sure, what do you need help with?"
-            else:
-                reply_text = f"You said: {user_message}"
 
             # --- Reply to LINE ---
             requests.post(
