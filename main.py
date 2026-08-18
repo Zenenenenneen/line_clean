@@ -5,6 +5,10 @@ app = FastAPI()
 
 LINE_ACCESS_TOKEN = "c3PJNA5FEDEdTYioXHXQU85hM7YLrDZSpm13BdFQB8NkgssQAAJD9H01z1+HwdYy1kf2xVeKqxjfW/v7crQm7aN6XRjN4foYjysJRiBZvVfQISvy8UUgga+K/JomzyA/Xh/17YNLYT//opvnkYrebAdB04t89/1O/w1cDnyilFU="
 
+@app.get("/ping")
+def ping():
+    return {"status": "ok", "message": "Server is live!"}
+
 
 @app.post("/webhook")
 async def webhook(request: Request):
