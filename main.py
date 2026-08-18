@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 import requests
+import dateparser
 
 app = FastAPI()
 
@@ -28,6 +29,8 @@ async def webhook(request: Request):
                 reply_text = "Sure, what do you need help with?"
             elif "จอง Private class ka" in user_message:
                 reply_text = "ได้เลยค่า กรุณาแจ้งวันและเวลาที่สนใจไว้เลยนะคะ"
+            elif dateparser.parse(user_message, languages=['th']):
+                reply_text = "ได้เลยค่า แอดมินจะจดไว้นะคะ เจอกันค่าา"
 
             # --- Reply to LINE ---
             requests.post(
