@@ -2,6 +2,53 @@ from fastapi import FastAPI, Request
 import requests
 import dateparser
 from datetime import datetime
+from pythainlp.util import normalize
+import re
+
+def convert_thai_time(text: str) -> str:
+    # Map Thai colloquial times to 24-hour format
+    time_map = {
+        "เช้า": "07:00",
+        "สาย": "10:00",
+        "เที่ยง": "12:00",
+        "บ่าย": "13:00",
+        "เย็น": "18:00",
+        "ค่ำ": "19:00",
+        "ดึก": "22:00",
+        "กลางคืน": "21:00",
+        "คืน": "21:00"
+    }
+
+    for word, time in time_map.items():
+        if word in text:
+            # Replace colloquial word with actual time
+            text = text.replace(word, time)
+    # Handle "X โมงเช้า/บ่าย/เย็น/คืน"
+    match = re.search(r"(\d+)\s*โมง(เช้า|บ่าย|เย็น|ค่ำ|คืน)", text)
+    if match:
+        hour = int(match.group(1))
+        period = match.group(2)
+
+        if period == "เช้า":
+            hour = hour  # morning hours (e.g. 7 โมงเช้า = 7:00)
+        elif period == "บ่าย":
+            hour += 12 if hour != 12 else 12  # afternoon (e.g. 3 โมงบ่าย = 15:00)
+        elif period in ["เย็น", "ค่ำ", "คืน"]:
+            hour += 12  # evening/night (e.g. 7 โมงเย็น = 19:00)
+
+        text = re.sub(r"\d+\s*โมง(เช้า|บ่าย|เย็น|ค่ำ|คืน)", f"{hour:02d}:00", text)
+
+    # Handle "ครึ่ง" (half past)
+    match_half = re.search(r"(\d+)\s*โมงครึ่ง", text)
+    if match_half:
+        hour = int(match_half.group(1))
+        text = re.sub(r"\d+\s*โมงครึ่ง", f"{hour:02d}:30", text)
+
+    # Handle "ตรง" (exact hour)
+    text = text.replace("ตรง", ":00")
+
+    return text
+
 
 app = FastAPI()
 
@@ -20,17 +67,19 @@ async def webhook(request: Request):
     for event in data["events"]:
         if event["type"] == "message" and event["message"]["type"] == "text":
             user_message = event["message"]["text"]
-
+            normalized = normalize(user_message)
+            normalized = convert_thai_time(normalized)
             parsed = dateparser.parse(
-                user_message,
+                normalized,
                 languages=['th','en'],
-                settings={'RELATIVE_BASE': datetime.now()}
+                settings={
+                    'RELATIVE_BASE': datetime.now(),
+                    'PREFER_DATES_FROM': 'future'
+                }
             )
 
             if parsed:
                 reply_text = f"ได้เลยค่า แอดมินจะจดไว้นะคะ เจอกันค่าา ({parsed.strftime('%Y-%m-%d %H:%M')})"
-
-            # --- Hardcoded replies ---
             elif user_message.lower() in ["hi", "hello"]:
                 reply_text = "Hey there! 👋"
             elif "bye" in user_message.lower():
