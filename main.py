@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 import requests
 import dateparser
+from datetime import datetime
 
 app = FastAPI()
 
@@ -20,8 +21,17 @@ async def webhook(request: Request):
         if event["type"] == "message" and event["message"]["type"] == "text":
             user_message = event["message"]["text"]
 
+            parsed = dateparser.parse(
+                user_message,
+                languages=['th','en'],
+                settings={'RELATIVE_BASE': datetime.now()}
+            )
+
+            if parsed:
+                reply_text = f"ได้เลยค่า แอดมินจะจดไว้นะคะ เจอกันค่าา ({parsed.strftime('%Y-%m-%d %H:%M')})"
+
             # --- Hardcoded replies ---
-            if user_message.lower() in ["hi", "hello"]:
+            elif user_message.lower() in ["hi", "hello"]:
                 reply_text = "Hey there! 👋"
             elif "bye" in user_message.lower():
                 reply_text = "Goodbye, take care!"
@@ -29,8 +39,6 @@ async def webhook(request: Request):
                 reply_text = "Sure, what do you need help with?"
             elif "จอง Private class ka" in user_message:
                 reply_text = "ได้เลยค่า กรุณาแจ้งวันและเวลาที่สนใจไว้เลยนะคะ"
-            elif dateparser.parse(user_message, languages=['th']):
-                reply_text = "ได้เลยค่า แอดมินจะจดไว้นะคะ เจอกันค่าา"
 
             # --- Reply to LINE ---
             requests.post(
