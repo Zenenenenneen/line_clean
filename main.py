@@ -6,7 +6,7 @@ from pythainlp.util import normalize
 import re
 
 def convert_thai_time(text: str) -> str:
-    # Map Thai colloquial times to 24-hour format
+    # Colloquial words
     time_map = {
         "เช้า": "07:00",
         "สาย": "10:00",
@@ -18,11 +18,10 @@ def convert_thai_time(text: str) -> str:
         "กลางคืน": "21:00",
         "คืน": "21:00"
     }
-
     for word, time in time_map.items():
         if word in text:
-            # Replace colloquial word with actual time
             text = text.replace(word, time)
+
     # Handle "X โมงเช้า/บ่าย/เย็น/คืน"
     match = re.search(r"(\d+)\s*โมง(เช้า|บ่าย|เย็น|ค่ำ|คืน)", text)
     if match:
@@ -30,22 +29,28 @@ def convert_thai_time(text: str) -> str:
         period = match.group(2)
 
         if period == "เช้า":
-            hour = hour  # morning hours (e.g. 7 โมงเช้า = 7:00)
+            pass  # morning hours (7 โมงเช้า = 07:00)
         elif period == "บ่าย":
-            hour += 12 if hour != 12 else 12  # afternoon (e.g. 3 โมงบ่าย = 15:00)
+            hour += 12 if hour != 12 else 12
         elif period in ["เย็น", "ค่ำ", "คืน"]:
-            hour += 12  # evening/night (e.g. 7 โมงเย็น = 19:00)
+            hour += 12
 
         text = re.sub(r"\d+\s*โมง(เช้า|บ่าย|เย็น|ค่ำ|คืน)", f"{hour:02d}:00", text)
 
-    # Handle "ครึ่ง" (half past)
+    # Handle "ครึ่ง"
     match_half = re.search(r"(\d+)\s*โมงครึ่ง", text)
     if match_half:
         hour = int(match_half.group(1))
         text = re.sub(r"\d+\s*โมงครึ่ง", f"{hour:02d}:30", text)
 
-    # Handle "ตรง" (exact hour)
+    # Handle "ตรง"
     text = text.replace("ตรง", ":00")
+
+    # Handle "ตี X" (early morning)
+    match_ti = re.search(r"ตี\s*(\d+)", text)
+    if match_ti:
+        hour = int(match_ti.group(1))
+        text = re.sub(r"ตี\s*\d+", f"{hour:02d}:00", text)
 
     return text
 
