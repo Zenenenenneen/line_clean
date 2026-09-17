@@ -92,7 +92,7 @@ async def webhook(request: Request):
             elif "help" in user_message.lower():
                 reply_text = "Sure, what do you need help with?"
             elif "จอง Private class ka" in user_message:
-                reply_text = "ได้เลยค่า กรุณาแจ้งวันและเวลาที่สนใจไว้เลยนะคะ"
+                reply_text = "ได้เลยค่า กรุณาแจ้งวันและเวลาที่สนใจไว้เลยนะคะ (พรุ่งนี้ 7 โมงเช้า)"
 
             # --- Reply to LINE ---
             requests.post(
